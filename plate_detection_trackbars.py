@@ -17,20 +17,21 @@ height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 
 
-def plate_finder(_=None):
+def plate_finder(_=None, paused= True):
     global cap, cfg
-    for slider in [SLIDER_FRAME, SLIDER_THRESH1, SLIDER_THRESH2, SLIDER_KERNEL_SCALE]:
-        val = cv2.getTrackbarPos(slider, WIN_NAME)
-        setattr(cfg, slider, val)
 
-    cap.set(1, cfg.frame)  # set which frame to work with
+    setattr(cfg, SLIDER_FRAME, cv2.getTrackbarPos(SLIDER_FRAME, WIN_NAME))
+    setattr(cfg, SLIDER_THRESH1, cv2.getTrackbarPos(SLIDER_THRESH1, WIN_NAME))
+    setattr(cfg, SLIDER_THRESH2, cv2.getTrackbarPos(SLIDER_THRESH2, WIN_NAME))
+    setattr(cfg, SLIDER_KERNEL_SCALE, cv2.getTrackbarPos(SLIDER_KERNEL_SCALE, WIN_NAME))
+
+    if paused: cap.set(1, cfg.frame);  # set which frame to work with
     ret, frame = cap.read()
 
     frame = frame[0.25 * height:0.6 * height, 0.3 * width:0.7 * width]
     frame = pyANPD.process_image(frame, 0, cfg.kernel_scale, cfg.threshold1, cfg.threshold2, type='est')
 
     cv2.imshow(WIN_NAME, frame)
-    print ("updating frame with cfg", cfg)
 
 
 class PlateDetectionConfig:
@@ -53,7 +54,17 @@ if __name__ == '__main__':
     cv2.createTrackbar(SLIDER_THRESH2, WIN_NAME, cfg.threshold2, 5000, plate_finder)
     cv2.createTrackbar(SLIDER_KERNEL_SCALE, WIN_NAME, cfg.kernel_scale, 30, plate_finder)
 
-    plate_finder()
 
-    cv2.waitKey(0)
+    # run plate_finder() with pausing/playing with the Space key:
+    while cap.isOpened():
+        plate_finder()
+        key = cv2.waitKey(0)
+        if key == 32:
+            while cap.isOpened():
+                plate_finder(paused=False)
+                key = cv2.waitKey(1)
+                if key == 32:
+                    cfg.frame = int(cap.get(cv2.CAP_PROP_POS_FRAMES))
+                    cv2.setTrackbarPos(SLIDER_FRAME, WIN_NAME, cfg.frame)
+                    break
     cv2.destroyAllWindows()
