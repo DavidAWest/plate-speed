@@ -2,43 +2,47 @@ import math
 
 import cv2
 import numpy as np
+import time
 
 
-def validate_contour(contour, img, aspect_ratio_range, area_range):
-    rect = cv2.minAreaRect(contour)
+def validate_contour(rect, img, aspect_ratio_range, area_range):
+    # rect = cv2.minAreaRect(contour)
     img_width = img.shape[1]
-    img_height = img.shape[0]
+    # img_height = img.shape[0]
     box = cv2.boxPoints(rect)
     box = np.int0(box)
 
-    X = rect[0][0]
-    Y = rect[0][1]
-    angle = rect[2]
+    # X = rect[0][0]
+    # Y = rect[0][1]
+    # angle = rect[2]
     width = rect[1][0]
     height = rect[1][1]
 
-    angle = (angle + 180) if width < height else (angle + 90)
+    # angle = (angle + 180) if width < height else (angle + 90)
 
     output = False
 
     if (width > 0 and height > 0) and ((width < img_width / 2.0) and (height < img_width / 2.0)):
         aspect_ratio = float(width) / height if width > height else float(height) / width
-        if (aspect_ratio >= aspect_ratio_range[0] and aspect_ratio <= aspect_ratio_range[1]):
-            if ((height * width > area_range[0]) and (height * width < area_range[1])):
+        if aspect_ratio_range[0] <= aspect_ratio <= aspect_ratio_range[1]:
+            if area_range[0] <= width*height <= area_range[1]:
 
-                box_copy = list(box)
-                point = box_copy[0]
-                del (box_copy[0])
-                dists = [((p[0] - point[0]) ** 2 + (p[1] - point[1]) ** 2) for p in box_copy]
-                sorted_dists = sorted(dists)
-                opposite_point = box_copy[dists.index(sorted_dists[1])]
+                box_copy = np.copy(box[1:])
+                point = np.copy(box[0])
+
+                dists = np.linalg.norm(point-box_copy, axis=1) # finds normalized euclidean distances between the pts
+                sorted_dists = np.sort(dists)
+                opposite_pt_index = np.where(dists == sorted_dists[1])
+                opposite_point = box_copy[opposite_pt_index][0]
+
+
                 tmp_angle = 90
 
                 if abs(point[0] - opposite_point[0]) > 0:
                     tmp_angle = abs(float(point[1] - opposite_point[1])) / abs(point[0] - opposite_point[0])
                     tmp_angle = rad_to_deg(math.atan(tmp_angle))
 
-                if tmp_angle <= 45:
+                if tmp_angle <= 15:
                     output = True
     return output
 
@@ -76,8 +80,8 @@ def process_image(raw_image, debug, kernel_scale, thrs1, thrs2, **options):
     #gray = enhance(gray)
     #cv2.imshow('enhance', gray)
 
-    #gray = cv2.GaussianBlur(gray, (5,5), 0)
-    #cv2.imshow('blur', gray)
+    # gray = cv2.GaussianBlur(gray, (5,5), 0)
+    # cv2.imshow('blur', gray)
     #gray = cv2.Sobel(gray, -1, 1, 0)
 
     canny = cv2.Canny(gray, thrs1, thrs2, apertureSize=5)
@@ -87,7 +91,7 @@ def process_image(raw_image, debug, kernel_scale, thrs1, thrs2, **options):
     se = cv2.getStructuringElement(cv2.MORPH_RECT, se_shape)
     gray = cv2.morphologyEx(canny, cv2.MORPH_CLOSE, se)
 
-    cv2.imshow('morphologyEx', gray)
+    #cv2.imshow('morphologyEx', gray)
     ed_img = np.copy(gray)
 
     _, contours, _ = cv2.findContours(canny, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
@@ -106,13 +110,13 @@ def process_image(raw_image, debug, kernel_scale, thrs1, thrs2, **options):
             aspect_ratio_range = (1, 2)
             area_range = (300, 8000)
 
-            ##Exact aspect ratio of eu plate is 4.6 (based on 520 x 113 mm)
+        ##Exact aspect ratio of eu plate is 4.6 (based on 520 x 113 mm)
         elif options.get('type') == 'est':
             aspect_ratio_range = (3, 6)
             area_range = (40, 18000)
 
-        if validate_contour(contour, gray, aspect_ratio_range, area_range):
-            rect = cv2.minAreaRect(contour)
+        rect = cv2.minAreaRect(contour)
+        if validate_contour(rect, gray, aspect_ratio_range, area_range):
             box = cv2.boxPoints(rect)
             box = np.int0(box)
             Xs = [i[0] for i in box]
@@ -128,7 +132,7 @@ def process_image(raw_image, debug, kernel_scale, thrs1, thrs2, **options):
 
             W = rect[1][0]
             H = rect[1][1]
-            aspect_ratio = float(W) / H if W > H else float(H) / W
+            # aspect_ratio = float(W) / H if W > H else float(H) / W
 
             center = ((x1 + x2) / 2, (y1 + y2) / 2)
             size = (x2 - x1, y2 - y1)
@@ -140,22 +144,19 @@ def process_image(raw_image, debug, kernel_scale, thrs1, thrs2, **options):
             tmp = cv2.getRectSubPix(tmp, (int(TmpW), int(TmpH)), (size[0] / 2, size[1] / 2))
             __, tmp = cv2.threshold(tmp, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
-            white_pixels = 0
 
-            for x in range(tmp.shape[0]):
-                for y in range(tmp.shape[1]):
-                    if tmp[x][y] == 255:
-                        white_pixels += 1
+            white_pixels = np.count_nonzero(tmp)
+
 
             edge_density = float(white_pixels) / (tmp.shape[0] * tmp.shape[1])
 
             tmp = cv2.getRectSubPix(raw_image, size, center)
             tmp = cv2.warpAffine(tmp, M, size)
-            TmpW = H if H > W else W
-            TmpH = H if H < W else W
-            tmp = cv2.getRectSubPix(tmp, (int(TmpW), int(TmpH)), (size[0] / 2, size[1] / 2))
+            # TmpW = H if H > W else W
+            # TmpH = H if H < W else W
+            # tmp = cv2.getRectSubPix(tmp, (int(TmpW), int(TmpH)), (size[0] / 2, size[1] / 2))
 
-            if edge_density > 0.9:
+            if edge_density > 0.85:
                 cv2.drawContours(input_image, [box], 0, (127, 0, 255), 2)
                 cv2.putText(input_image, str(edge_density), (x1, y1), font, 1, (0, 255, 0))
                 cv2.putText(input_image, str(np.prod(size)), (x1, y2), font, 1, (255, 0, 0))
