@@ -121,7 +121,7 @@ while vid_in.isOpened():
     car2.process_frame(vid_in)
 
     # frame = cv2.resize(frame, (768, 432))
-    frame = frame[0.25 * height:0.6 * height, 0.3 * width:0.7 * width]
+    frame = frame[int(0.25 * height):int(0.6 * height), int(0.3 * width):int(0.7 * width)]
     plots_speeds = np.ones((PLOT_WIN_HEIGHT, PLOT_WIN_WIDTH,3), np.uint8) * 255
     plots_diffs = np.ones((PLOT_WIN_HEIGHT, PLOT_WIN_WIDTH,3), np.uint8) * 255
 
