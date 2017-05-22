@@ -42,19 +42,27 @@ def validate_contour(rect, img, aspect_ratio_range, area_range):
                     tmp_angle = abs(float(point[1] - opposite_point[1])) / abs(point[0] - opposite_point[0])
                     tmp_angle = rad_to_deg(math.atan(tmp_angle))
 
-                if tmp_angle <= 15:
+                if tmp_angle <= 9:
                     output = True
     return output
 
+class PlateBuffer():
+    def __init__(self, size):
+        self.list = np.empty(shape=(size,), dtype=object)
+    def __iter__(self):
+        return iter(self.list)
+    def __getitem__(self, item):
+        return self.list[item]
+    # equivalent to appending the current last element to the end of this deque.
+    def put_no_val(self):
+        self.list = np.roll(self.list, -1)
+        self.list[-1] = self.list[-2]
+    def append(self, val):
+        self.list = np.roll(self.list, -1)
+        self.list[-1] = val
 
 class Plate():
     """ Rectangle of the plate """
-    def __init__(self):
-        self.x1 = 0
-        self.x2 = 0
-        self.y1 = 0
-        self.y2 = 0
-
 
     def __init__(self, contour):
         self.contour = contour
@@ -72,6 +80,11 @@ class Plate():
 
         self.center = (self.x1 + self.x2) / 2, (self.y1 + self.y2) / 2
         self.size = self.x2 - self.x1, self.y2 - self.y1
+
+    def distance_to(self, point):
+        distance = np.linalg.norm( np.subtract(self.center,point)) # Euclidean
+        return distance
+
 
 def deg_to_rad(angle):
     return angle * np.pi / 180.0
@@ -139,19 +152,11 @@ def find_contours(raw_image, debug, kernel_scale, thrs1, thrs2, **options):
 
         ##Exact aspect ratio of eu plate is 4.6 (based on 520 x 113 mm)
         elif options.get('type') == 'est':
-            aspect_ratio_range = (3, 6)
+            aspect_ratio_range = (4, 5)
             area_range = (40, 18000)
 
         plate = Plate(contour)
         if validate_contour(plate.rect, gray, aspect_ratio_range, area_range):
-            # box = cv2.boxPoints(rect)
-            # box = np.int0(box)
-            # Xs = [i[0] for i in box]
-            # Ys = [i[1] for i in box]
-            # x1 = min(Xs)
-            # x2 = max(Xs)
-            # y1 = min(Ys)
-            # y2 = max(Ys)
 
             angle = plate.rect[2]
             if angle < -45:
@@ -173,17 +178,9 @@ def find_contours(raw_image, debug, kernel_scale, thrs1, thrs2, **options):
 
 
             white_pixels = np.count_nonzero(tmp)
-
-
             edge_density = float(white_pixels) / (tmp.shape[0] * tmp.shape[1])
 
-            tmp = cv2.getRectSubPix(raw_image, plate.size, plate.center)
-            tmp = cv2.warpAffine(tmp, M, plate.size)
-            # TmpW = H if H > W else W
-            # TmpH = H if H < W else W
-            # tmp = cv2.getRectSubPix(tmp, (int(TmpW), int(TmpH)), (size[0] / 2, size[1] / 2))
-
-            if edge_density > 0.85:
+            if edge_density > 0.9:
                 returned_plates.append(plate)
 
-    return returned_plates
+    return np.array(returned_plates)

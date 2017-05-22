@@ -29,7 +29,9 @@ def plate_finder(_=None, paused= True):
     ret, frame = cap.read()
 
     frame = frame[0.25 * height:0.6 * height, 0.3 * width:0.7 * width]
-    frame = pyANPD.process_image(frame, 0, cfg.kernel_scale, cfg.threshold1, cfg.threshold2, type='est')
+    plates = pyANPD.find_contours(frame, 0, cfg.kernel_scale, cfg.threshold1, cfg.threshold2, type='est')
+    for plate in plates:
+        cv2.drawContours(frame, [plate.box], 0, (127, 0, 255), 2)
 
     cv2.imshow(WIN_NAME, frame)
 
@@ -50,8 +52,8 @@ if __name__ == '__main__':
 
     cv2.namedWindow(WIN_NAME)
     cv2.createTrackbar(SLIDER_FRAME, WIN_NAME, cfg.frame, total_frames, plate_finder)
-    cv2.createTrackbar(SLIDER_THRESH1, WIN_NAME, cfg.threshold1, 8000, plate_finder)
-    cv2.createTrackbar(SLIDER_THRESH2, WIN_NAME, cfg.threshold2, 8000, plate_finder)
+    cv2.createTrackbar(SLIDER_THRESH1, WIN_NAME, cfg.threshold1, 7000, plate_finder)
+    cv2.createTrackbar(SLIDER_THRESH2, WIN_NAME, cfg.threshold2, 7000, plate_finder)
     cv2.createTrackbar(SLIDER_KERNEL_SCALE, WIN_NAME, cfg.kernel_scale, 30, plate_finder)
 
 
