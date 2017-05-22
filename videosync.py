@@ -38,7 +38,7 @@ ms_per_frame = 1000 / vid_fps
 
 write_lin_regfile = False
 show_vid = True
-LIN_REG_FILENAME = "regression/lin_reg_div.csv"
+LIN_REG_FILENAME = "regression/15_lin_reg_div.csv"
 
 DIFF_DEQUE_SIZE = 60
 diffs_buffer = Buffer(DIFF_DEQUE_SIZE, type=np.float)
@@ -84,17 +84,23 @@ class Car():
     def draw_plot_line(self, img):
         plotline(self.plt_data.list, img, x_scale, y_scale, PLOT_MAX*y_scale, self.plt_color)
 
+car1 = Car(csv_file="gps_interpolated/15_intp_car1.csv", plot_color=(0, 0, 255))
+car2 = Car(csv_file="gps_interpolated/15_intp_car2.csv", plot_color=(255, 0, 0))
+
 # Select a single plate with largest size
 def find_plate(img):
-    plates = pyANPD.find_contours(img, 0, 15, 2782, 2930, type='est')
+    #plates = pyANPD.find_contours(img, 0, 15, 2782, 2930, type='est')
+    plates = pyANPD.find_contours(img, 0, 15, 1661, 2784, type='est')
     if len(plates) < 1:
         return None
     # Filter plates which have a distance larger than X to the median of previous plates
     prev_plates = last_plates.list[last_plates.list != NONE_ARRAY]
     if len(prev_plates) > 0:
-        center_x = np.median(map(lambda p: p.center[0], prev_plates))
-        center_y = np.median(map(lambda p: p.center[1], prev_plates))
-        plates = filter(lambda p: p.distance_to((center_x, center_y)) < 50, plates)
+        center_x = int(np.median(map(lambda p: p.center[0], prev_plates)))
+        center_y = int(np.median(map(lambda p: p.center[1], prev_plates)))
+        radius = 150
+        cv2.circle(img, (center_x, center_y),  radius, (0,0,255))
+        plates = filter(lambda p: p.distance_to((center_x, center_y)) < radius, plates)
 
     if len(plates) is 1:
         return plates[0]
@@ -105,8 +111,7 @@ def find_plate(img):
     else: return None;
 
 
-car1 = Car(csv_file="gps_interpolated/15_intp_car1.csv", plot_color=(0, 0, 255))
-car2 = Car(csv_file="gps_interpolated/15_intp_car2.csv", plot_color=(255, 0, 0))
+
 
 if write_lin_regfile:
     out = open(LIN_REG_FILENAME, 'w')

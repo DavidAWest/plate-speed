@@ -11,7 +11,7 @@ SLIDER_THRESH2 = 'threshold1'
 SLIDER_THRESH1 = 'threshold2'
 WIN_NAME = 'main_window'
 
-cap = cv2.VideoCapture("C:/DEV/gopro/15slow.mp4")
+cap = cv2.VideoCapture("C:/DEV/gopro/14 slow.mp4")
 width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
 height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
 total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))

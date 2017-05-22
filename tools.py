@@ -2,11 +2,11 @@ import cv2
 import numpy as np
 
 
-cf_intercept = 22.80688
-cf_vel1 = 1.35486
-cf_vel1_sqd = -0.01685
-cf_diff = -30.31544
-cf_diff_sqd =  6.15518
+cf_intercept = 21.276770
+cf_vel1 = 1.308432
+cf_vel1_sqd = -0.013927
+cf_diff = -27.641055
+cf_diff_sqd =  5.164449
 
 def predict(difference, speed):
     return cf_intercept + \
