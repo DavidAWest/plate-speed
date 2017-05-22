@@ -47,6 +47,32 @@ def validate_contour(rect, img, aspect_ratio_range, area_range):
     return output
 
 
+class Plate():
+    """ Rectangle of the plate """
+    def __init__(self):
+        self.x1 = 0
+        self.x2 = 0
+        self.y1 = 0
+        self.y2 = 0
+
+
+    def __init__(self, contour):
+        self.contour = contour
+
+        self.rect = cv2.minAreaRect(contour)
+        self.box = cv2.boxPoints(self.rect)
+        self.box = np.int0(self.box)
+        Xs = self.box[:,0]
+        Ys = self.box[:,1]
+
+        self.x1 = np.min(Xs)
+        self.x2 = np.max(Xs)
+        self.y1 = np.min(Ys)
+        self.y2 = np.max(Ys)
+
+        self.center = (self.x1 + self.x2) / 2, (self.y1 + self.y2) / 2
+        self.size = self.x2 - self.x1, self.y2 - self.y1
+
 def deg_to_rad(angle):
     return angle * np.pi / 180.0
 
@@ -60,7 +86,7 @@ def enhance(img):
     return cv2.filter2D(img, -1, kernel)
 
 
-def process_image(raw_image, debug, kernel_scale, thrs1, thrs2, **options):
+def find_contours(raw_image, debug, kernel_scale, thrs1, thrs2, **options):
     se_shape = (16, 4)
 
     if options.get('type') == 'rect':
@@ -85,7 +111,7 @@ def process_image(raw_image, debug, kernel_scale, thrs1, thrs2, **options):
     #gray = cv2.Sobel(gray, -1, 1, 0)
 
     canny = cv2.Canny(gray, thrs1, thrs2, apertureSize=5)
-    cv2.imshow('canny', canny)
+    # cv2.imshow('canny', canny)
 
     #h,sobel = cv2.threshold(gray,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
     se = cv2.getStructuringElement(cv2.MORPH_RECT, se_shape)
@@ -98,6 +124,7 @@ def process_image(raw_image, debug, kernel_scale, thrs1, thrs2, **options):
 
     font = cv2.FONT_HERSHEY_SIMPLEX
 
+    returned_plates = []
     for contour in contours:
         aspect_ratio_range = (2.2, 12)
         area_range = (500, 18000)
@@ -115,33 +142,33 @@ def process_image(raw_image, debug, kernel_scale, thrs1, thrs2, **options):
             aspect_ratio_range = (3, 6)
             area_range = (40, 18000)
 
-        rect = cv2.minAreaRect(contour)
-        if validate_contour(rect, gray, aspect_ratio_range, area_range):
-            box = cv2.boxPoints(rect)
-            box = np.int0(box)
-            Xs = [i[0] for i in box]
-            Ys = [i[1] for i in box]
-            x1 = min(Xs)
-            x2 = max(Xs)
-            y1 = min(Ys)
-            y2 = max(Ys)
+        plate = Plate(contour)
+        if validate_contour(plate.rect, gray, aspect_ratio_range, area_range):
+            # box = cv2.boxPoints(rect)
+            # box = np.int0(box)
+            # Xs = [i[0] for i in box]
+            # Ys = [i[1] for i in box]
+            # x1 = min(Xs)
+            # x2 = max(Xs)
+            # y1 = min(Ys)
+            # y2 = max(Ys)
 
-            angle = rect[2]
+            angle = plate.rect[2]
             if angle < -45:
                 angle += 90
 
-            W = rect[1][0]
-            H = rect[1][1]
+            W = plate.rect[1][0]
+            H = plate.rect[1][1]
             # aspect_ratio = float(W) / H if W > H else float(H) / W
 
-            center = ((x1 + x2) / 2, (y1 + y2) / 2)
-            size = (x2 - x1, y2 - y1)
-            M = cv2.getRotationMatrix2D((size[0] / 2, size[1] / 2), angle, 1.0);
-            tmp = cv2.getRectSubPix(ed_img, size, center)
-            tmp = cv2.warpAffine(tmp, M, size)
+            # center = ((x1 + x2) / 2, (y1 + y2) / 2)
+            # size = (x2 - x1, y2 - y1)
+            M = cv2.getRotationMatrix2D((plate.size[0] / 2, plate.size[1] / 2), angle, 1.0);
+            tmp = cv2.getRectSubPix(ed_img, plate.size, plate.center)
+            tmp = cv2.warpAffine(tmp, M, plate.size)
             TmpW = H if H > W else W
             TmpH = H if H < W else W
-            tmp = cv2.getRectSubPix(tmp, (int(TmpW), int(TmpH)), (size[0] / 2, size[1] / 2))
+            tmp = cv2.getRectSubPix(tmp, (int(TmpW), int(TmpH)), (plate.size[0] / 2, plate.size[1] / 2))
             __, tmp = cv2.threshold(tmp, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
 
@@ -150,15 +177,13 @@ def process_image(raw_image, debug, kernel_scale, thrs1, thrs2, **options):
 
             edge_density = float(white_pixels) / (tmp.shape[0] * tmp.shape[1])
 
-            tmp = cv2.getRectSubPix(raw_image, size, center)
-            tmp = cv2.warpAffine(tmp, M, size)
+            tmp = cv2.getRectSubPix(raw_image, plate.size, plate.center)
+            tmp = cv2.warpAffine(tmp, M, plate.size)
             # TmpW = H if H > W else W
             # TmpH = H if H < W else W
             # tmp = cv2.getRectSubPix(tmp, (int(TmpW), int(TmpH)), (size[0] / 2, size[1] / 2))
 
             if edge_density > 0.85:
-                cv2.drawContours(input_image, [box], 0, (127, 0, 255), 2)
-                cv2.putText(input_image, str(edge_density), (x1, y1), font, 1, (0, 255, 0))
-                cv2.putText(input_image, str(np.prod(size)), (x1, y2), font, 1, (255, 0, 0))
+                returned_plates.append(plate)
 
-    return input_image
+    return returned_plates

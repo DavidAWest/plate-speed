@@ -50,8 +50,8 @@ if __name__ == '__main__':
 
     cv2.namedWindow(WIN_NAME)
     cv2.createTrackbar(SLIDER_FRAME, WIN_NAME, cfg.frame, total_frames, plate_finder)
-    cv2.createTrackbar(SLIDER_THRESH1, WIN_NAME, cfg.threshold1, 5000, plate_finder)
-    cv2.createTrackbar(SLIDER_THRESH2, WIN_NAME, cfg.threshold2, 5000, plate_finder)
+    cv2.createTrackbar(SLIDER_THRESH1, WIN_NAME, cfg.threshold1, 8000, plate_finder)
+    cv2.createTrackbar(SLIDER_THRESH2, WIN_NAME, cfg.threshold2, 8000, plate_finder)
     cv2.createTrackbar(SLIDER_KERNEL_SCALE, WIN_NAME, cfg.kernel_scale, 30, plate_finder)
 
 
