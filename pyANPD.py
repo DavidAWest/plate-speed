@@ -124,13 +124,13 @@ def find_contours(raw_image, debug, kernel_scale, thrs1, thrs2, **options):
     #gray = cv2.Sobel(gray, -1, 1, 0)
 
     canny = cv2.Canny(gray, thrs1, thrs2, apertureSize=5)
-    # cv2.imshow('canny', canny)
+    cv2.imshow('canny', canny)
 
     #h,sobel = cv2.threshold(gray,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
     se = cv2.getStructuringElement(cv2.MORPH_RECT, se_shape)
     gray = cv2.morphologyEx(canny, cv2.MORPH_CLOSE, se)
 
-    #cv2.imshow('morphologyEx', gray)
+    cv2.imshow('morphologyEx', gray)
     ed_img = np.copy(gray)
 
     _, contours, _ = cv2.findContours(canny, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)

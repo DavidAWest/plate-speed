@@ -29,11 +29,12 @@ height = int(vid_in.get(cv2.CAP_PROP_FRAME_HEIGHT))
 vid_fps = vid_in.get(cv2.CAP_PROP_FPS)
 ms_per_frame = 1000 / vid_fps
 
-write_lin_regfile = False
-show_vid = True
+write_lin_regfile = True
+show_vid = False
+LIN_REG_FILENAME = "regression/lin_reg_div.csv"
 
 DIFF_DEQUE_SIZE = 60
-diffs_buffer = Buffer(DIFF_DEQUE_SIZE)
+diffs_buffer = Buffer(DIFF_DEQUE_SIZE, type=np.float)
 sizes_buffer = Buffer(120)
 last_plates = pyANPD.PlateBuffer(15)
 
@@ -107,7 +108,7 @@ def find_plate(img):
 
 
 if write_lin_regfile:
-    out = open("regression/lin_reg.csv", 'w')
+    out = open(LIN_REG_FILENAME, 'w')
 
 while vid_in.isOpened():
     ret, frame = vid_in.read()
@@ -137,7 +138,7 @@ while vid_in.isOpened():
 
         a = np.mean(sizes_buffer[:60])
         b = np.mean(sizes_buffer[60:])
-        diff = b - a
+        diff = b / a
         diffs_buffer.put(diff)
 
         if show_vid:

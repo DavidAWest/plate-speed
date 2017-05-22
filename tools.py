@@ -3,8 +3,8 @@ import numpy as np
 
 
 class Buffer():
-    def __init__(self, size):
-        self.list = np.zeros(size, dtype=np.int)
+    def __init__(self, size, type=np.int):
+        self.list = np.zeros(size, dtype=type)
 
     def __iter__(self):
         return iter(self.list)
