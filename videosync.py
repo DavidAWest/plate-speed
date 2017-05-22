@@ -58,7 +58,7 @@ class Car():
         self.speed = 0.0
 
         # plotting
-        self.plt_data = Buffer(PLOT_PTS_MINUS_ONE + 1)
+        self.plt_data = Buffer(PLOT_PTS_MINUS_ONE + 1, type=np.float)
         # self.plt_data = collections.deque([0] * (PLOT_PTS_MINUS_ONE + 1), maxlen=PLOT_PTS_MINUS_ONE + 1)
         self.plt_color = plot_color
 

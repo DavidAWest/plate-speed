@@ -28,7 +28,7 @@ def plate_finder(_=None, paused= True):
     if paused: cap.set(1, cfg.frame);  # set which frame to work with
     ret, frame = cap.read()
 
-    frame = frame[0.25 * height:0.6 * height, 0.3 * width:0.7 * width]
+    frame = frame[int(0.25 * height):int(0.6 * height), int(0.3 * width):int(0.7 * width)]
     plates = pyANPD.find_contours(frame, 0, cfg.kernel_scale, cfg.threshold1, cfg.threshold2, type='est')
     for plate in plates:
         cv2.drawContours(frame, [plate.box], 0, (127, 0, 255), 2)

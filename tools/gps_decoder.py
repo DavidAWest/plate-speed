@@ -46,7 +46,10 @@ for line in lines[1:]:  # Skip the header line
     line_cols[0] = str(timestamp + offset_ms)
 
     # convert m/s to km/h
-    line_cols[6] = str(float(line_cols[6]) * 3.6)
+    speed = line_cols[6]
+    if speed == '':
+        speed = 0
+    line_cols[6] = str(float(speed) * 3.6)
 
     # write line
     out.write(",".join(line_cols))
