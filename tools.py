@@ -25,7 +25,8 @@ class Buffer():
 def plotline(vals, window, xscale, yscale, y_offset=0, color=(0, 0, 0)):
     xlen = len(vals)
     for j in range(xlen - 1):
-        cv2.line(window,
-                 (j * xscale, int((y_offset - (vals[j] * yscale)))),
-                 (j * xscale + xscale, int((y_offset - (vals[j + 1] * yscale)))),
-                 color)
+        if np.isfinite(vals[j]) and np.isfinite(vals[j+1]):
+            cv2.line(window,
+                     (j * xscale, int((y_offset - (vals[j] * yscale)))),
+                     (j * xscale + xscale, int((y_offset - (vals[j + 1] * yscale)))),
+                     color)
