@@ -1,5 +1,16 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from optparse import OptionParser
+
+parser = OptionParser()
+parser.add_option("-i", "--input", dest="input_filename",
+                  help="read input from gps logger trace file")
+parser.add_option("-o", "--output", dest="output_filename",
+	help="output file to write offset values to")
+parser.add_option("-v", "--visualize", action="store_true", dest="visualize", default=False,
+                  help="show matplotlib of data")
+
+(options, args) = parser.parse_args()
 
 
 def data_from_csv(file):
@@ -18,10 +29,8 @@ def data_from_csv(file):
     return times, speeds
 
 
-
-
-input_filename = '../gps2/15_mod_car2.csv'
-output_filename = '../gps_interpolated/15_intp_car2.csv'
+input_filename = options.input_filename
+output_filename = options.output_filename
 
 
 
@@ -33,11 +42,9 @@ if len(speeds) != len(times):
 xnew = np.arange(times[0], times[-1], 33.3666666667)
 ynew = np.interp(xnew, times, speeds)
 
-# plt.plot(times, speeds, 'o', markersize =4.0)
-# plt.plot(xnew, ynew, '-x', alpha=0.25)
-# plt.show()
+
 if len(xnew) != len(ynew):
-    print "Array lenght mismatch, theres a bug in the code!"
+    print "Array length mismatch, theres a bug in the code!"
     exit()
 
 out = open(output_filename, 'w')
@@ -45,5 +52,9 @@ for i in range(len(xnew)):
     out.write( str(xnew[i]) + "," + str(ynew[i]) + '\n')
 out.close()
 
+if options.visualize:
+	plt.plot(times, speeds, 'o', markersize =4.0)
+	plt.plot(xnew, ynew, '-x', alpha=0.25)
+	plt.show()
 
 
