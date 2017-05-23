@@ -1,16 +1,29 @@
+#!/usr/bin/python
 from __future__ import print_function  # Only needed for Python 2
+from optparse import OptionParser
 from datetime import datetime
+
+parser = OptionParser()
+parser.add_option("-i", "--input", dest="input_filename",
+                  help="read input from gps logger trace file")
+parser.add_option("-o", "--output", dest="output_filename",
+	help="output file to write offset values to")
+parser.add_option("-f", "--offset", type="int", dest="offset_frames",
+                  help="frame of the video at which this gps data starts")
+
+(options, args) = parser.parse_args()
 
 epoch = datetime.utcfromtimestamp(0)
 
-
 ms_per_frame = 33.3666666667
 
-
 # car 1
-offset_frames = 301
-input_filename = "gps/15 slow drive car1.txt"
-output_filename = 'gps2/15_mod_car1.csv'
+# offset_frames = 301
+# input_filename = "gps/15 slow drive car1.txt"
+# output_filename = 'gps2/15_mod_car1.csv'
+offset_frames = options.offset_frames
+input_filename = options.input_filename
+output_filename = options.output_filename
 
 # car 2
 # offset_frames = 101
