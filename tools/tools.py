@@ -41,3 +41,6 @@ def plotline(vals, window, xscale, yscale, y_offset=0, color=(0, 0, 0)):
                      (j * xscale, int((y_offset - (vals[j] * yscale)))),
                      (j * xscale + xscale, int((y_offset - (vals[j + 1] * yscale)))),
                      color)
+
+
+NONE_ARRAY = np.array(None)

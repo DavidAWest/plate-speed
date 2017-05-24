@@ -2,11 +2,7 @@ import cv2
 import numpy as np
 
 import pyANPD
-from tools import Buffer, plotline, predict
-
-
-
-NONE_ARRAY = np.array(None)
+from tools.tools import Buffer, plotline, predict, NONE_ARRAY
 
 PLOT_WIN = 'plot'
 PLOT_WIN_HEIGHT = 300
@@ -23,6 +19,8 @@ DIFF_Y_SCALE = 0.25
 font = cv2.FONT_HERSHEY_SIMPLEX
 
 vid_in = cv2.VideoCapture("C:/DEV/gopro/15slow.mp4")
+car1_csv = "gps_interpolated/15_intp_car1.csv"
+car2_csv = "gps_interpolated/15_intp_car2.csv"
 
 width = int(vid_in.get(cv2.CAP_PROP_FRAME_WIDTH))
 height = int(vid_in.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -84,13 +82,13 @@ class Car():
     def draw_plot_line(self, img):
         plotline(self.plt_data.list, img, x_scale, y_scale, PLOT_MAX*y_scale, self.plt_color)
 
-car1 = Car(csv_file="gps_interpolated/15_intp_car1.csv", plot_color=(0, 0, 255))
-car2 = Car(csv_file="gps_interpolated/15_intp_car2.csv", plot_color=(255, 0, 0))
+car1 = Car(csv_file=car1_csv, plot_color=(0, 0, 255))
+car2 = Car(csv_file=car2_csv, plot_color=(255, 0, 0))
 
 # Select a single plate with largest size
 def find_plate(img):
     #plates = pyANPD.find_contours(img, 0, 15, 2782, 2930, type='est')
-    plates = pyANPD.find_contours(img, 0, 15, 1661, 2784, type='est')
+    plates = pyANPD.find_contours(img, 0, 15, 1661, 2784, showsteps=True, type='est')
     if len(plates) < 1:
         return None
     # Filter plates which have a distance larger than X to the median of previous plates
